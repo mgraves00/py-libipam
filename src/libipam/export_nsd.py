@@ -72,7 +72,7 @@ class export_nsd:
 
         dom_r = domain_record[0]
 #        dom_r = dom_r | { 'rr_type': "SOA"}
-        dom_r = utils.merge_dicts(dom_r, { 'rr_type': "SOA"})
+        dom_r = merge_dicts(dom_r, { 'rr_type': "SOA"})
         file.append(self._rr_print(dom_r))
         ns_recs = self._extract_records("NS", resource_records)
         mx_recs = self._extract_records("MX", resource_records)
@@ -103,7 +103,7 @@ class export_nsd:
         rr_type = kwargs['rr_type']
         opts = kwargs['options']
 #        kwargs = kwargs | opts
-        kwargs = utils.merge_dicts(kwargs,opts)
+        kwargs = merge_dicts(kwargs,opts)
         if kwargs.get('ttl') == None:
             kwargs['ttl'] = ""
         (name, domain) = self.db._splitfqdn(kwargs['fqdn'])
