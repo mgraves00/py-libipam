@@ -109,13 +109,12 @@ class db_http:
             res = requests.post("/".join(path),headers=headers,data=jdata)
         except Exception as e:
             raise Exception(e)
-        if res.status_code != 200:
-            raise Exception(f'response code {res.status_code}')
         r = json.loads(res.text)
+        if res.status_code != 200:
+            raise Exception(f'response code {res.status_code}: {r["msg"]}')
         if r['status'] == 'error':
             raise Exception(r['msg'])
         return(r['records'])
-            
 
     def update_domain(self, *args, **kwargs):
         headers = {'Authorization': self.api_key}
@@ -128,9 +127,9 @@ class db_http:
             res = requests.put("/".join(path),headers=headers,data=jdata)
         except Exception as e:
             raise Exception(e)
-        if res.status_code != 200:
-            raise Exception(f'response code {res.status_code}')
         r = json.loads(res.text)
+        if res.status_code != 200:
+            raise Exception(f'response code {res.status_code}: {r["msg"]}')
         if r['status'] == 'error':
             raise Exception(r['msg'])
         return(r['records'])
@@ -146,9 +145,9 @@ class db_http:
             res = requests.delete("/".join(path),headers=headers,data=jdata)
         except Exception as e:
             raise Exception(e)
-        if res.status_code != 200:
-            raise Exception(f'response code {res.status_code}')
         r = json.loads(res.text)
+        if res.status_code != 200:
+            raise Exception(f'response code {res.status_code}: {r["msg"]}')
         if r['status'] == 'error':
             raise Exception(r['msg'])
         return(r['records'])
@@ -164,9 +163,9 @@ class db_http:
             res = requests.get("/".join(path),headers=headers)
         except Exception as e:
             raise Exception(e)
-        if res.status_code != 200:
-            raise Exception(f'response code {res.status_code}')
         r = json.loads(res.text)
+        if res.status_code != 200:
+            raise Exception(f'response code {res.status_code}: {r["msg"]}')
         if r['status'] == 'error':
             raise Exception(r['msg'])
         return(r['records'])
@@ -233,9 +232,9 @@ class db_http:
             res = requests.get("/".join(path),headers=headers)
         except Exception as e:
             raise Exception(e)
-        if res.status_code != 200:
-            raise Exception(f'response code {res.status_code}')
         r = json.loads(res.text)
+        if res.status_code != 200:
+            raise Exception(f'response code {res.status_code}:{r["msg"]}')
         if r['status'] == 'error':
             raise Exception(r['msg'])
         return(r['records'])
@@ -250,9 +249,9 @@ class db_http:
             res = requests.get("/".join(path),headers=headers)
         except Exception as e:
             raise Exception(e)
-        if res.status_code != 200:
-            raise Exception(f'response code {res.status_code}')
         r = json.loads(res.text)
+        if res.status_code != 200:
+            raise Exception(f'response code {res.status_code}:{r["msg"]}')
         if r['status'] == 'error':
             raise Exception(r['msg'])
         return(r['records'])
