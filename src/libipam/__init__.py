@@ -1,5 +1,5 @@
 #
-# Copyright 2022 Michael Graves <mgraves@brainfat.net>
+# Copyright 2022 Michael Graves <mg@brainfat.net>
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
