@@ -34,6 +34,8 @@
 import sqlite3
 import ipaddress
 import os
+from libipam.utils import *
+
 """
     database interface for IPAM DB
 
@@ -266,7 +268,8 @@ class db_sqlite3:
         except Exception as e:
             raise Exception(e)
         vals = self._fixup_values(rr_type, value)
-        values = values | vals
+#        values = values | vals
+        values = merge_dicts(values,vals)
         values['options'] = options
         sql=sql.format(','.join(values.keys()), ",".join(list(map(lambda a: ":"+a, values.keys()))))
         return self._query(sql, values)
@@ -300,7 +303,8 @@ class db_sqlite3:
             options = ""
         values = {}
         vals = self._fixup_values(rr_type, value)
-        values = values | vals
+#        values = values | vals
+        values = merge_dicts(values,vals)
         values['options'] = options
         sql="UPDATE records SET {} WHERE id = {}".format(', '.join(list(map(lambda a: a+" = :"+a, values.keys()))), rid)
         return self._query(sql, values)

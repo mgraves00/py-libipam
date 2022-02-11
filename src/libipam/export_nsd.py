@@ -29,6 +29,7 @@
 #     SUCH DAMAGE.
 
 import time
+from libipam.utils import *
 
 class export_nsd:
 
@@ -70,7 +71,8 @@ class export_nsd:
         subdomain_record = self.db.find_domain("*."+domain)
 
         dom_r = domain_record[0]
-        dom_r = dom_r | { 'rr_type': "SOA"}
+#        dom_r = dom_r | { 'rr_type': "SOA"}
+        dom_r = utils.merge_dicts(dom_r, { 'rr_type': "SOA"})
         file.append(self._rr_print(dom_r))
         ns_recs = self._extract_records("NS", resource_records)
         mx_recs = self._extract_records("MX", resource_records)
@@ -100,7 +102,8 @@ class export_nsd:
     def _rr_print(self, kwargs):
         rr_type = kwargs['rr_type']
         opts = kwargs['options']
-        kwargs = kwargs | opts
+#        kwargs = kwargs | opts
+        kwargs = utils.merge_dicts(kwargs,opts)
         if kwargs.get('ttl') == None:
             kwargs['ttl'] = ""
         (name, domain) = self.db._splitfqdn(kwargs['fqdn'])
