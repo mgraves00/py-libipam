@@ -110,8 +110,6 @@ class db_http:
         except Exception as e:
             raise Exception(e)
         if res.status_code != 200:
-            raise Exception(e)
-        if res.status_code != 200:
             raise Exception(f'response code {res.status_code}')
         r = json.loads(res.text)
         if r['status'] == 'error':
@@ -131,8 +129,6 @@ class db_http:
         except Exception as e:
             raise Exception(e)
         if res.status_code != 200:
-            raise Exception(e)
-        if res.status_code != 200:
             raise Exception(f'response code {res.status_code}')
         r = json.loads(res.text)
         if r['status'] == 'error':
@@ -149,8 +145,6 @@ class db_http:
         try:
             res = requests.delete("/".join(path),headers=headers,data=jdata)
         except Exception as e:
-            raise Exception(e)
-        if res.status_code != 200:
             raise Exception(e)
         if res.status_code != 200:
             raise Exception(f'response code {res.status_code}')
