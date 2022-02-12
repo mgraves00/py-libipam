@@ -69,7 +69,7 @@ class export_unbound:
         resource_records = self.db.find_record("*."+domain)
         subdomain_record = self.db.find_domain("*."+domain)
 
-        file.append(f'local-zone: "{domain}." static"')
+        file.append(f'local-zone: "{domain}." static')
         dom_r = domain_record[0]
 #        dom_r = dom_r | { 'rr_type': "SOA"}
         dom_r = merge_dicts(dom_r,{ 'rr_type': "SOA"})
