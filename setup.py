@@ -1,9 +1,9 @@
 from setuptools import setup, find_packages
 
 setup( name="libipam",
-	version="1.0.5",
+	version="1.0.6",
 	author="Michael Graves",
-	author_email="mg@brainfat.net",
+	author_email="code@brainfat.net",
 	packages=find_packages("src"),
     package_dir={"": "src"},
     url = "https://github.com/mgraves00/py-libipam",
