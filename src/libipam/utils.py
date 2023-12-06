@@ -28,11 +28,58 @@
 #     OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 #     SUCH DAMAGE.
 
-__all__ = [ 'merge_dicts' ]
+import time
+
+__all__ = [ 'merge_dicts', 'gen_serial', 'clear_records', 'extract_records', 'rr_cmp' ]
 
 def merge_dicts(d1, d2):
     out = d1
     for k in d2.keys():
         out[k] = d2[k]
     return(out)
+
+def gen_serial():
+    return int(time.time())
+
+"""
+clear_records(clear_list, resource_record_list)
+
+returns an array of resource records minus the record in the clear list
+"""
+def clear_records(clear_list, resource_record_list):
+    ret=[]
+    for i, r in enumerate(resource_record_list):
+        if r['rr_type'] not in clear_list:
+            ret.append(r)
+    return(ret)
+"""
+extract_records(record_type, resouce_record_list)
+
+return an array of resource records of a specific type
+"""
+def extract_records(record_type,  resouce_recod_list):
+    ret=[]
+    for i, r in enumerate(resouce_recod_list):
+        if r['rr_type'] == record_type:
+            ret.append(r)
+    return(ret)
+
+"""
+rr_cmp(record_a, record_b)
+
+return -1, 0, 1 based upon fqdn and then record type
+"""
+def rr_cmp(record_a, record_b):
+    # sort by name, @ first, then rr_type
+    if record_a['fqdn'] < record_b['fqdn']:
+        return -1
+    elif record_a['fqdn'] > record_b['fqdn']:
+        return 1
+    else:
+        if record_a['rr_type'] < record_b['rr_type']:
+            return -1
+        elif record_a['rr_type'] > record_b['rr_type']:
+            return 1
+        else:
+            return 0
 

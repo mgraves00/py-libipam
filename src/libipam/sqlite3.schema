@@ -30,12 +30,19 @@
 ---
 --- create the IPAM tables
 ---
+CREATE TABLE defaults (
+	name TEXT UNIQUE,
+	value TEXT
+);
+INSERT INTO defaults (name,value) VALUES ('ipam.version','1');
 
 CREATE TABLE domains (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	name TEXT UNIQUE,
 	serial INTEGER DEFAULT 0,
-	options TEXT
+	options TEXT,
+	created_at TEXT DEFAULT current_timestamp,
+	updated_at TEXT DEFAULT current_timestamp
 );
 
 CREATE TABLE records (
@@ -45,6 +52,8 @@ CREATE TABLE records (
 	options TEXT,
 	value TEXT,
 	intvalue BLOB,
+	created_at TEXT DEFAULT current_timestamp,
+	updated_at TEXT DEFAULT current_timestamp,
 	domain_id INTEGER NOT NULL REFERENCES domains(id) ON DELETE CASCADE,
 	record_id INTEGER REFERENCES records(id) ON DELETE CASCADE
 );
@@ -57,6 +66,7 @@ CREATE VIEW fqdn_records(id, fqdn, domain_id, rr_type, value, options, record_id
 		records.rr_type, records.value, records.options, records.record_id, records.intvalue
 	FROM records JOIN domains ON records.domain_id = domains.id;
 
+-- domains triggers
 CREATE TRIGGER dom_ins AFTER INSERT ON domains BEGIN
 	UPDATE domains SET name = LOWER(NEW.name) WHERE id = NEW.id;
 END;
@@ -64,14 +74,21 @@ END;
 CREATE TRIGGER dom_upd AFTER UPDATE ON domains BEGIN
 	UPDATE domains SET
 		name = LOWER(NEW.name),
-		serial = IIF(OLD.serial != NEW.serial, NEW.serial, OLD.serial+1)
+		serial = IIF(OLD.serial != NEW.serial, NEW.serial, OLD.serial+1),
+		updated_at = DATETIME('NOW')
 	WHERE id = OLD.id;
 END;
+
+-- records triggers
 CREATE TRIGGER rec_ins AFTER INSERT ON records BEGIN
 	UPDATE records SET name = LOWER(NEW.name), rr_type = UPPER(NEW.rr_type) WHERE id=NEW.id;
 END;
 CREATE TRIGGER rec_upd AFTER UPDATE ON records BEGIN
-	UPDATE records SET name = LOWER(NEW.name), rr_type = UPPER(NEW.rr_type) WHERE id=OLD.id;
+	UPDATE records SET
+		name = LOWER(NEW.name),
+		rr_type = UPPER(NEW.rr_type),
+		updated_at = DATETIME('NOW')
+	WHERE id=OLD.id;
 END;
 
 -- enable the foreign key constraints

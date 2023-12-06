@@ -28,7 +28,6 @@
 #     OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 #     SUCH DAMAGE.
 
-import time
 from libipam.utils import *
 
 class export_nsd:
@@ -74,9 +73,9 @@ class export_nsd:
 #        dom_r = dom_r | { 'rr_type': "SOA"}
         dom_r = merge_dicts(dom_r, { 'rr_type': "SOA"})
         file.append(self._rr_print(dom_r))
-        ns_recs = self._extract_records("NS", resource_records)
-        mx_recs = self._extract_records("MX", resource_records)
-        resource_records = self._clear_records(["NS", "MS"], resource_records)
+        ns_recs = extract_records("NS", resource_records)
+        mx_recs = extract_records("MX", resource_records)
+        resource_records = clear_records(["NS", "MS"], resource_records)
         # add NS records
         for r in ns_recs:
             file.append(self._rr_print(r))
@@ -89,7 +88,7 @@ class export_nsd:
             save_ns=[]
             sub_rr = self.db.find_record("*."+sub['fqdn'])
             # only need to print the NS and A records for NS
-            ns_recs = self._extract_records("NS", sub_rr)
+            ns_recs = extract_records("NS", sub_rr)
             for r in ns_recs:
                 file.append(self._rr_print(r))
                 save_ns.append(r['value'])
@@ -112,50 +111,10 @@ class export_nsd:
         else:
             kwargs['fqdn'] = kwargs['fqdn']+"."
         if rr_type == "SOA":
-            kwargs['serial'] = self._gen_serial()
+            kwargs['serial'] = gen_serial()
         if self.RR_FMT[rr_type] != None:
             str=self.RR_FMT[rr_type].format(**kwargs)
         else:
             str=self.RR_FMT['XX'].format(**kwargs)
         return(str)
-
-#    def _unpack_options(self, options):
-#        vals={}
-#        if options == None or len(options) == 0:
-#            return(vals)
-#        for o in options.split(" "):
-#            (k,v) = o.split(":")
-#            vals[k]=v
-#        return(vals)
-
-    def _rr_sorted(self, a, b):
-        # sort by name, @ first, then rr_type
-        if a['fqdn'] < b['fqdn']:
-            return -1
-        elif a['fqdn'] > b['fqdn']:
-            return 1
-        else:
-            if a['rr_type'] < b['rr_type']:
-                return -1
-            elif a['rr_type'] > b['rr_type']:
-                return 1
-            else:
-                return 0
-
-    def _extract_records(self, rr_type,  rrl):
-        ret=[]
-        for i, r in enumerate(rrl):
-            if r['rr_type'] == rr_type:
-                ret.append(r)
-        return(ret)
-
-    def _clear_records(self, rec_l, rrl):
-        ret=[]
-        for i, r in enumerate(rrl):
-            if r['rr_type'] not in rec_l:
-                ret.append(r)
-        return(ret)
-
-    def _gen_serial(self):
-        return int(time.time())
 

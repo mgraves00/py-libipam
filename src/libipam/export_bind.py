@@ -28,32 +28,31 @@
 #     OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 #     SUCH DAMAGE.
 
-import time
 from libipam.utils import *
 
 class export_bind:
 
     RR_FMT = {
             'SOA':    "@          {ttl:<6} IN {rr_type} {fqdn}. ( {email}. {serial} {refresh} {retry} {expire} {ncache} )",
-            'A':      "{fqdn:<10} {ttl:<6} IN {rr_type} {value}",
-            'AAAA':   "{fqdn:<10} {ttl:<6} IN {rr_type} {value}",
-            'CNAME':  "{fqdn:<10} {ttl:<6} IN {rr_type} {value}.",
-            'CAA':    "{fqdn:<10} {ttl:<6} IN {rr_type} {flag} {tag} {value}",
-            'CERT':   "{fqdn:<10} {ttl:<6} IN {rr_type} {type} {tag} {algo} {value}",
-            'DCHID':  "{fqdn:<10} {ttl:<6} IN {rr_type} {value}",
-            'DNAME':  "{fqdn:<10} {ttl:<6} IN {rr_type} {value}",
-            'DS':     "{fqdn:<10} {ttl:<6} IN {rr_type} {tag} {algo} {digest} ( {value} )",
-            'HIP':    "{fqdn:<10} {ttl:<6} IN {rr_type} ( {algo} {hit} {key} {value} )",
-            'LOC':    "{fqdn:<10} {ttl:<6} IN {rr_type} {lat} {long} {alt} {hor} {vert}",
-            'MX':     "{fqdn:<10} {ttl:<6} IN {rr_type} {priority} {value}.",
-            'NAPTR':  "{fqdn:<10} {ttl:<6} IN {rr_type} {order} \"{pref}\" \"{flags}\" \"{service\"} \"{regx}\" {value}",
-            'NS':     "{fqdn:<10} {ttl:<6} IN {rr_type} {value}.",
-            'PTR':    "{fqdn:<10} {ttl:<6} IN {rr_type} {value}",
-            'SRV':    "{fqdn:<10} {ttl:<6} IN {rr_type} {priority} {weight} {port} {value}",
-            'SSHFP':  "{fqdn:<10} {ttl:<6} IN {rr_type} {algo} {type} {value}",
-            'TXT':    "{fqdn:<10} {ttl:<6} IN {rr_type} \"{value}\"",
-            'TLSA':   "{fqdn:<10} {ttl:<6} IN {rr_type} {usage} {selector} {type} {value}",
-            'XX':     "{fqdn:<10} {ttl:<6} IN {rr_type} {value}"
+            'A':      "{name:<10} {ttl:<6} IN {rr_type} {value}",
+            'AAAA':   "{name:<10} {ttl:<6} IN {rr_type} {value}",
+            'CNAME':  "{name:<10} {ttl:<6} IN {rr_type} {value}.",
+            'CAA':    "{name:<10} {ttl:<6} IN {rr_type} {flag} {tag} {value}",
+            'CERT':   "{name:<10} {ttl:<6} IN {rr_type} {type} {tag} {algo} {value}",
+            'DCHID':  "{name:<10} {ttl:<6} IN {rr_type} {value}",
+            'DNAME':  "{name:<10} {ttl:<6} IN {rr_type} {value}",
+            'DS':     "{name:<10} {ttl:<6} IN {rr_type} {tag} {algo} {digest} ( {value} )",
+            'HIP':    "{name:<10} {ttl:<6} IN {rr_type} ( {algo} {hit} {key} {value} )",
+            'LOC':    "{name:<10} {ttl:<6} IN {rr_type} {lat} {long} {alt} {hor} {vert}",
+            'MX':     "{name:<10} {ttl:<6} IN {rr_type} {priority} {value}.",
+            'NAPTR':  "{name:<10} {ttl:<6} IN {rr_type} {order} \"{pref}\" \"{flags}\" \"{service\"} \"{regx}\" {value}",
+            'NS':     "{name:<10} {ttl:<6} IN {rr_type} {value}.",
+            'PTR':    "{name:<10} {ttl:<6} IN {rr_type} {value}",
+            'SRV':    "{name:<10} {ttl:<6} IN {rr_type} {priority} {weight} {port} {value}",
+            'SSHFP':  "{name:<10} {ttl:<6} IN {rr_type} {algo} {type} {value}",
+            'TXT':    "{name:<10} {ttl:<6} IN {rr_type} \"{value}\"",
+            'TLSA':   "{name:<10} {ttl:<6} IN {rr_type} {usage} {selector} {type} {value}",
+            'XX':     "{name:<10} {ttl:<6} IN {rr_type} {value}"
     }
 
     def __init__(self, *args, **kwargs):
@@ -74,9 +73,9 @@ class export_bind:
 #        dom_r = dom_r | { 'rr_type': "SOA"}
         dom_r = merge_dicts(dom_r, { 'rr_type': "SOA"})
         file.append(self._rr_print(dom_r))
-        ns_recs = self._extract_records("NS", resource_records)
-        mx_recs = self._extract_records("MX", resource_records)
-        resource_records = self._clear_records(["NS", "MS"], resource_records)
+        ns_recs = extract_records("NS", resource_records)
+        mx_recs = extract_records("MX", resource_records)
+        resource_records = clear_records(["NS", "MS"], resource_records)
         # add NS records
         for r in ns_recs:
             file.append(self._rr_print(r))
@@ -90,7 +89,7 @@ class export_bind:
             save_ns=[]
             sub_rr = self.db.find_record("*."+sub['fqdn'])
             # only need to print the NS and A records for NS
-            ns_recs = self._extract_records("NS", sub_rr)
+            ns_recs = extract_records("NS", sub_rr)
             for r in ns_recs:
                 file.append(self._rr_print(r))
                 save_ns.append(r['value'])
@@ -108,45 +107,15 @@ class export_bind:
         if kwargs.get('ttl') == None:
             kwargs['ttl'] = ""
         if rr_type == "SOA":
-            kwargs['serial'] = self._gen_serial()
-#        if rr_type != "SOA":
-#            (name, domain) = self.db._splitfqdn(kwargs['fqdn'])
-#            kwargs['name'] = name
-#            kwargs['domain'] = domain
+            kwargs['serial'] = gen_serial()
+        (name, domain) = self.db._splitfqdn(kwargs['fqdn'])
+        kwargs['name'] = name
+        kwargs['domain'] = domain
+        if name == "@":
+            kwargs['fqdn'] = name
         if self.RR_FMT[rr_type] != None:
             str=self.RR_FMT[rr_type].format(**kwargs)
         else:
             str=self.RR_FMT['XX'].format(**kwargs)
         return(str)
-
-    def _rr_sorted(self, a, b):
-        # sort by name, @ first, then rr_type
-        if a['fqdn'] < b['fqdn']:
-            return -1
-        elif a['fqdn'] > b['fqdn']:
-            return 1
-        else:
-            if a['rr_type'] < b['rr_type']:
-                return -1
-            elif a['rr_type'] > b['rr_type']:
-                return 1
-            else:
-                return 0
-
-    def _extract_records(self, rr_type,  rrl):
-        ret=[]
-        for i, r in enumerate(rrl):
-            if r['rr_type'] == rr_type:
-                ret.append(r)
-        return(ret)
-
-    def _clear_records(self, rec_l, rrl):
-        ret=[]
-        for i, r in enumerate(rrl):
-            if r['rr_type'] not in rec_l:
-                ret.append(r)
-        return(ret)
-
-    def _gen_serial(self):
-        return int(time.time())
 
