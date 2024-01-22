@@ -280,15 +280,16 @@ class db_sqlite3:
         value = args[2]
         if fqdn == None:
             raise Exception("required field not specified")
-        recs = self.find_record(fqdn)
         rid = None
         found = False
+        options = kwargs.get('options',None)
+        recs = self.find_record(fqdn)
         if len(recs) == 0:  # record not found
             raise Exception("could not find record")
         else:
-            if 'id' not in kwargs:
+            if options != None and 'id' not in options:
                 raise Exception("id missing")
-            rid = kwargs['id']
+            rid = int(options['id'])
             for r in recs:
                 # we already know that the fqdn matches... check the type and id
                 if r['rr_type'] == rr_type.upper() and r['id'] == int(rid): # otherwise it might be a different type of record
@@ -296,7 +297,6 @@ class db_sqlite3:
                     break
         if found == False:
             raise Exception("id/type mismatch")
-        options = kwargs.get('options',None)
         if options != None:
             options = self._pack_options(options)
         else:
@@ -306,29 +306,34 @@ class db_sqlite3:
 #        values = values | vals
         values = merge_dicts(values,vals)
         values['options'] = options
-        sql="UPDATE records SET {} WHERE id = {}".format(', '.join(list(map(lambda a: a+" = :"+a, values.keys()))), rid)
+        sql="UPDATE records SET {} WHERE id = {}".format(', '.join(list(map(lambda a: a+" = :"+a, values.keys()))), int(rid))
         return self._query(sql, values)
 
     def delete_record(self, *args, **kwargs):
-        fqdn = args[0]
-        force = kwargs.get('force',False)
-        if fqdn == None:
-            raise Exception("required field not specified")
-        recs = self.find_record(fqdn)
         rid = None
         found = False
+        fqdn = args[0]
+        if fqdn == None:
+            raise Exception("required field not specified")
+        force = kwargs.get('force',False)
+        options = kwargs.get('options',None)
+        recs = self.find_record(fqdn)
         if len(recs) == 0:
             raise Exception("record not found")
         else:
-            if 'id' not in kwargs:
+            if options != None and 'id' not in options:
                 raise Exception("id Missing")
-            rid = kwargs['id']
+            rid = int(options['id'])
             for r in recs:
                 if r['id'] == int(rid): # otherwise it might be a different type of record
                     found = True
                     break
         if found == False:
             raise Exception("id/type mismatch")
+        if options != None:
+            options = self._pack_options(options)
+        else:
+            options = ""
         sql = "SELECT count(*) AS cnt FROM records WHERE record_id = :id"
         recs = self._query(sql, {'id': rid})
         if recs[0]['cnt'] > 0 and force == False:
