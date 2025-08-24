@@ -1,4 +1,5 @@
 #
+# Copyright 2025 Michael Graves <mg@brainfat.net>
 # Copyright 2022 Michael Graves <mg@brainfat.net>
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -33,7 +34,7 @@ from libipam.utils import *
 class export_nsd:
 
     RR_FMT = {
-            'SOA':  "{fqdn:<25} {ttl:<6} IN {rr_type} {fqdn} ( {email}. {serial} {refresh} {retry} {expire} {ncache} )",
+            'SOA':  "{fqdn:<25} {ttl:<6} IN {rr_type} {fqdn} ( {mname} {email}. {serial} {refresh} {retry} {expire} {ncache} )",
             'A':      "{fqdn:<25} {ttl:<6} IN {rr_type} {value}",
             'AAAA':   "{fqdn:<25} {ttl:<6} IN {rr_type} {value}",
             'CNAME':  "{fqdn:<25} {ttl:<6} IN {rr_type} {value}.",
