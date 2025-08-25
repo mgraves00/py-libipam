@@ -34,7 +34,7 @@ from libipam.utils import *
 class export_bind:
 
     RR_FMT = {
-            'SOA':    "@          {ttl:<6} IN {rr_type} {fqdn}. ( {mname} {email}. {serial} {refresh} {retry} {expire} {ncache} )",
+            'SOA':    "@          {ttl:<6} IN {rr_type} {mname}. {email}. ( {serial} {refresh} {retry} {expire} {ncache} )",
             'A':      "{name:<10} {ttl:<6} IN {rr_type} {value}",
             'AAAA':   "{name:<10} {ttl:<6} IN {rr_type} {value}",
             'CNAME':  "{name:<10} {ttl:<6} IN {rr_type} {value}.",
