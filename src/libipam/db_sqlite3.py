@@ -2,7 +2,7 @@
 ### interface with ipam.db
 ###
 #
-# Copyright 2022 Michael Graves <mg@brainfat.net>
+# Copyright 2026 Michael Graves <mg@brainfat.net>
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -107,20 +107,28 @@ class db_sqlite3:
     def find_domain(self, *args, **kwargs):
         name = args[0]
         include_subs = kwargs.get('include_subs',False)
-        sql = 'SELECT * FROM domains'
         values={}
-        if name != None:
-            if name.find('*') == -1:
-                sql=sql+" WHERE name = :name"
-            else:
-                name = name.replace('*','%')
-                sql=sql+" WHERE name LIKE :name"
-            values['name'] = name
-            if include_subs == True:
-                sql=sql+" OR name LIKE :subname"
-                values['subname'] = "%."+name
-        sql=sql+" ORDER BY name ASC;"
-        result = self._query(sql, values)
+        result=[]
+        name_arr = args[0].split('.');
+        while len(name_arr) > 0:
+            sql = 'SELECT * FROM domains'
+            name = ".".join(name_arr);	
+            if name != None:
+                if name.find('*') == -1:
+                    sql=sql+" WHERE name = :name"
+                else:
+                    name = name.replace('*','%')
+                    sql=sql+" WHERE name LIKE :name"
+                values['name'] = name
+                if include_subs == True:
+                    sql=sql+" OR name LIKE :subname"
+                    values['subname'] = "%."+name
+            sql=sql+" ORDER BY name ASC;"
+            result = self._query(sql, values)
+            if len(result) == 0:	# nothing returned
+                name_arr.pop(0);	# remove first part and try again
+            else: # exit loop
+                break
         ret = []
         for res in result:
             if 'options' in res:
@@ -206,16 +214,15 @@ class db_sqlite3:
         fqdn = args[0]
         include_subs = kwargs.get('include_subs',False)
         values={}
+        if fqdn == None:
+            raise Exception("missing required argument")
         sql = "SELECT * FROM fqdn_records"
         if (fqdn != None):
             sql=sql+" WHERE"
-            (name, domain) = self._splitfqdn(fqdn)
-            if name == None or domain == None:
-                raise Exception("missing required argument")
-            if include_subs == False:
-                res = self.find_domain(domain)
-                if len(res) == 0:
-                    raise Exception("domain not found")
+            name_arr = fqdn.split('.')
+            res = self.find_domain(".".join(name_arr[1:]))
+            if len(res) == 0:
+                raise Exception("domain not found")
                 values['domain_id'] = res[0]['id']
                 sql=sql+" domain_id = :domain_id AND"
             if fqdn.find('*') == -1:
@@ -239,16 +246,18 @@ class db_sqlite3:
         value = args[2]
         if fqdn == None or rr_type == None or value == None:
             raise Exception("missing required argument")
-        (name, domain) = self._splitfqdn(fqdn)
-        if name == None or domain == None:
-            raise Exception("required field not specified")
         recs = self.find_record(fqdn)
         if len(recs) > 0:      # record migh already exists... check all returned vals
             for r in recs:
                 # we already know that the fqdn matches... check the type and value
                 if r['rr_type'] == rr_type.upper() and r['value'] == value.lower(): # otherwise it might be a different type of record
                     raise Exception("host already exists")
-
+        recs = self.find_domain(fqdn)
+        if recs == 0:
+            raise Exception("domain not found")
+        domain = recs[0]['fqdn']
+        domain_id = recs[0]['id']
+        name = fqdn.replace("."+domain,'')    # removed the domain
         options = kwargs.get('options',None)
         if options != None:
             options = self._pack_options(options)
@@ -257,18 +266,8 @@ class db_sqlite3:
         sql = 'INSERT INTO records ({}) VALUES ({});'
         rr_type=rr_type.upper()
         values={'name':name, 'rr_type': rr_type}
-        try:
-            r = self.find_domain(domain)
-            if len(r) == 0:
-                raise Exception("domain not found")
-            if len(r) > 1:
-                raise Exception("too many records")
-            domain_id = r[0]['id']
-            values['domain_id'] = r[0]['id']
-        except Exception as e:
-            raise Exception(e)
+        values['domain_id'] = domain_id
         vals = self._fixup_values(rr_type, value)
-#        values = values | vals
         values = merge_dicts(values,vals)
         values['options'] = options
         sql=sql.format(','.join(values.keys()), ",".join(list(map(lambda a: ":"+a, values.keys()))))
@@ -303,7 +302,6 @@ class db_sqlite3:
             options = ""
         values = {}
         vals = self._fixup_values(rr_type, value)
-#        values = values | vals
         values = merge_dicts(values,vals)
         values['options'] = options
         sql="UPDATE records SET {} WHERE id = {}".format(', '.join(list(map(lambda a: a+" = :"+a, values.keys()))), int(rid))
@@ -382,11 +380,11 @@ class db_sqlite3:
             ret.append({'id': res['id'], 'fqdn': res['fqdn'], 'rr_type': res['rr_type'], 'value': res['value'], 'options': options })
         return(ret)
 
-    def _splitfqdn(self, fqdn):
+    def _splitfqdn(self, fqdn, off=0):
         if len(fqdn) == 0:
             return(None, None)
         sp = fqdn.split('.')
-        return(sp[0],".".join(sp[1:]))
+        return(sp[off],".".join(sp[(off+1):]))
 
     def _ip2num(self, addr=None):
         if addr == None:
