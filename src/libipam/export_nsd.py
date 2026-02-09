@@ -1,4 +1,5 @@
 #
+# Copyright 2026 Michael Graves <mg@brainfat.net>
 # Copyright 2025 Michael Graves <mg@brainfat.net>
 # Copyright 2022 Michael Graves <mg@brainfat.net>
 # 
@@ -38,10 +39,10 @@ class export_nsd:
             'A':      "{fqdn:<25} {ttl:<6} IN {rr_type} {value}",
             'AAAA':   "{fqdn:<25} {ttl:<6} IN {rr_type} {value}",
             'CNAME':  "{fqdn:<25} {ttl:<6} IN {rr_type} {value}.",
-            'CAA':    "{fqdn:<25} {ttl:<6} IN {rr_type} {flag} {tag} {value}",
+            'CAA':    "{fqdn:<25} {ttl:<6} IN {rr_type} {flag} {tag} \"{value}\"",
             'CERT':   "{fqdn:<25} {ttl:<6} IN {rr_type} {type} {tag} {algo} {value}",
             'DCHID':  "{fqdn:<25} {ttl:<6} IN {rr_type} {value}",
-            'DNAME':  "{fqdn:<25} {ttl:<6} IN {rr_type} {value}",
+            'DNAME':  "{fqdn:<25} {ttl:<6} IN {rr_type} {value}.",
             'DS':     "{fqdn:<25} {ttl:<6} IN {rr_type} {tag} {algo} {digest} ( {value} )",
             'HIP':    "{fqdn:<25} {ttl:<6} IN {rr_type} ( {algo} {hit} {key} {value} )",
             'LOC':    "{fqdn:<25} {ttl:<6} IN {rr_type} {lat} {long} {alt} {hor} {vert}",
@@ -49,7 +50,7 @@ class export_nsd:
             'NAPTR':  "{fqdn:<25} {ttl:<6} IN {rr_type} {order} \"{pref}\" \"{flags}\" \"{service\"} \"{regx}\" {value}",
             'NS':     "{fqdn:<25} {ttl:<6} IN {rr_type} {value}.",
             'PTR':    "{fqdn:<25} {ttl:<6} IN {rr_type} {value}",
-            'SRV':    "{fqdn:<25} {ttl:<6} IN {rr_type} {priority} {weight} {port} {value}",
+            'SRV':    "{fqdn:<25} {ttl:<6} IN {rr_type} {priority} {weight} {port} {value}.",
             'SSHFP':  "{fqdn:<25} {ttl:<6} IN {rr_type} {algo} {type} {value}",
             'TXT':    "{fqdn:<25} {ttl:<6} IN {rr_type} \"{value}\"",
             'TLSA':   "{fqdn:<25} {ttl:<6} IN {rr_type} {usage} {selector} {type} {value}",
