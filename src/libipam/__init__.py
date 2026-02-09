@@ -37,7 +37,7 @@ from libipam.export_unbound import export_unbound
 class ipam:
     VERSION="1.0.11"
     RR_OPTS = { 
-        'SOA': { 'req': ['email','refresh','retry','expire','ncache'], 'opt':['ttl','serial'] },
+        'SOA': { 'req': ['mname', 'email','refresh','retry','expire','ncache'], 'opt':['ttl','serial'] },
         'A': { 'req': [], 'opt': ['ttl'] },
         'AFSDB': { 'req': ['subtype'], 'opt': ['ttl'] },
         'AAAA': { 'req': [], 'opt': ['ttl'] },
