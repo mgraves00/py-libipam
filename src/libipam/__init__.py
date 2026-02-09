@@ -1,5 +1,5 @@
 #
-# Copyright 2022 Michael Graves <mg@brainfat.net>
+# Copyright 2026 Michael Graves <mg@brainfat.net>
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -35,6 +35,7 @@ from libipam.export_nsd import export_nsd
 from libipam.export_unbound import export_unbound
 
 class ipam:
+    VERSION="1.0.10"
     RR_OPTS = { 
         'SOA': { 'req': ['email','refresh','retry','expire','ncache'], 'opt':['ttl','serial'] },
         'A': { 'req': [], 'opt': ['ttl'] },
