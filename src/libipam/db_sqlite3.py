@@ -409,12 +409,16 @@ class db_sqlite3:
         vals = {}
         if rr_type in ["A", "AAAA"]:
             vals['intvalue'] = self._ip2num(value)
-        elif rr_type in ["CNAME", "MX", "NS", "SRV"]:
-            value=value.lower()
-            r = self.find_record(value)
-            if len(r) == 0:
-                raise Exception("could not find main record")
-            vals['record_id'] = r[0]['id']
+# NOTE: It would be nice to check and make sure the value of these records
+#       is correct and points to a valid location... but in the case where
+#       the value points to a domain that is not maintained by ipamd, there
+#       will be an error that shouldn't be.  So comment out.
+#        elif rr_type in ["CNAME", "MX", "NS", "SRV"]:
+#            value=value.lower()
+#            r = self.find_record(value)
+#            if len(r) == 0:
+#                raise Exception("could not find main record")
+#            vals['record_id'] = r[0]['id']
         # add the actual value too
         vals['value'] = value
         return(vals)
