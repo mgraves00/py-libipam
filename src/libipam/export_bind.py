@@ -1,4 +1,5 @@
 #
+# Copyright 2026 Michael Graves <mg@brainfat.net>
 # Copyright 2025 Michael Graves <mg@brainfat.net>
 # Copyright 2022 Michael Graves <mg@brainfat.net>
 # 
@@ -48,7 +49,8 @@ class export_bind:
             'MX':     "{name:<10} {ttl:<6} IN {rr_type} {priority} {value}.",
             'NAPTR':  "{name:<10} {ttl:<6} IN {rr_type} {order} \"{pref}\" \"{flags}\" \"{service\"} \"{regx}\" {value}",
             'NS':     "{name:<10} {ttl:<6} IN {rr_type} {value}.",
-            'PTR':    "{name:<10} {ttl:<6} IN {rr_type} {value}",
+            'PTR':    "{revaddr:<10} {ttl:<6} IN {rr_type} {fqdn}",
+            'PTR6':   "{revaddr:<10} {ttl:<6} IN {rr_type} {fqdn}",
             'SRV':    "{name:<10} {ttl:<6} IN {rr_type} {priority} {weight} {port} {value}.",
             'SSHFP':  "{name:<10} {ttl:<6} IN {rr_type} {algo} {type} {value}",
             'TXT':    "{name:<10} {ttl:<6} IN {rr_type} \"{value}\"",
@@ -60,6 +62,55 @@ class export_bind:
         self.db = args[0]
 
     def process(self, *args, **kwargs):
+        d = kwargs.get('domain', None)
+        n = kwargs.get('network', None)
+        if d != None:
+            return self.process_domain(*args, **kwargs)
+        if n != None:
+            return self.process_network(*args, **kwargs)
+        return None
+
+    def process_network(self, *args, **kwargs):
+        network = kwargs.get('network',None)
+        if self.db == None or network == None:
+            raise Exception("missing arguments")
+        file = []
+        network = validate_network(network)
+        if network == None:
+            raise Exception("invalid network")
+        revdom = net_to_rev(network)
+        # SOA record for reverse zone
+        revdom_SOA = self.db.find_domain(revdom)
+        if len(revdom_SOA) == 0:
+            raise Exception("network not found")
+        # NS records for reverse zone
+        resource_records = self.db.find_record("*."+revdom)
+        ns_recs = extract_records("NS", resource_records)
+        # remaining records
+        network_records = self.db.find_network(network)
+
+        file.append(f'$ORIGIN {revdom}.')
+
+#        kwargs['name'] = name
+#        kwargs['domain'] = domain
+#        if name == "@":
+#            kwargs['fqdn'] = name
+
+        # add NS records
+        for r in ns_recs:
+            (name,domain) = splitfqdn(r['fqdn'])
+            r['name'] = name
+            file.append(self._rr_print(r))
+        
+        for r in network_records:
+            r['revaddr'] = rev_addr(r['value'])
+            r['revaddr'] = stripdomain(r['revaddr'],revdom)
+            if r['revaddr'] != None:
+                file.append(self._revr_print(r))
+
+        return("\n".join(file))
+
+    def process_domain(self, *args, **kwargs):
         domain = kwargs.get('domain',None)
         if self.db == None or domain == None:
             raise Exception("missing arguments")
@@ -71,7 +122,6 @@ class export_bind:
 
         file.append(f'$ORIGIN {domain}.')
         dom_r = domain_record[0]
-#        dom_r = dom_r | { 'rr_type': "SOA"}
         dom_r = merge_dicts(dom_r, { 'rr_type': "SOA"})
         file.append(self._rr_print(dom_r))
         ns_recs = extract_records("NS", resource_records)
@@ -101,22 +151,25 @@ class export_bind:
         return("\n".join(file))
 
     def _rr_print(self, kwargs):
-        rr_type = kwargs['rr_type']
-        opts = kwargs['options']
-#        kwargs = kwargs | opts
-        kwargs = merge_dicts(kwargs,opts)
-        if kwargs.get('ttl') == None:
-            kwargs['ttl'] = ""
-        if rr_type == "SOA":
-            kwargs['serial'] = gen_serial()
-        (name, domain) = self.db._splitfqdn(kwargs['fqdn'])
-        kwargs['name'] = name
-        kwargs['domain'] = domain
-        if name == "@":
-            kwargs['fqdn'] = name
-        if self.RR_FMT[rr_type] != None:
-            str=self.RR_FMT[rr_type].format(**kwargs)
-        else:
-            str=self.RR_FMT['XX'].format(**kwargs)
-        return(str)
+        return rr_print(self.RR_FMT, **kwargs)
+#        rr_type = kwargs['rr_type']
+#        opts = kwargs['options']
+##        kwargs = kwargs | opts
+#        kwargs = merge_dicts(kwargs,opts)
+#        if kwargs.get('ttl') == None:
+#            kwargs['ttl'] = ""
+#        if rr_type == "SOA":
+#            kwargs['serial'] = gen_serial()
+#        (name, domain) = self.db._splitfqdn(kwargs['fqdn'])
+#        kwargs['name'] = name
+#        kwargs['domain'] = domain
+#        if name == "@":
+#            kwargs['fqdn'] = name
+#        if self.RR_FMT[rr_type] != None:
+#            str=self.RR_FMT[rr_type].format(**kwargs)
+#        else:
+#            str=self.RR_FMT['XX'].format(**kwargs)
+#        return(str)
 
+    def _revr_print(self, kwargs):
+        return revr_print(self.RR_FMT, **kwargs)
