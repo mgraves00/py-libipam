@@ -1,4 +1,5 @@
 #
+# Copyright 2026 Michael Graves <mg@brainfat.net>
 # Copyright 2022 Michael Graves <mg@brainfat.net>
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -29,8 +30,60 @@
 #     SUCH DAMAGE.
 
 import time
+import ipaddress
 
-__all__ = [ 'merge_dicts', 'gen_serial', 'clear_records', 'extract_records', 'rr_cmp' ]
+__all__ = [ 'merge_dicts', 'gen_serial', 'clear_records', 'extract_records',
+            'rr_cmp', 'net_to_rev', 'rev_addr', 'splitfqdn', 'rr_print', 'revr_print',
+            'validate_network' ]
+
+def _ipv4_cut(bitmask):
+    t=4
+    m=min(bitmask // 8, 3)
+    return (t-m)
+
+def _ipv6_cut(bitmask):
+    t=32
+    m=min(bitmask // 4, 31)
+    return (t-m)
+
+def validate_network(cidr):
+    net = None
+    try:
+        net = ipaddress.IPv4Network(cidr,False)
+    except:
+        try:
+            net = ipaddress.IPv6Network(cidr,False)
+        except:
+            return None
+    return(str(net))
+
+def net_to_rev(cidr):
+    net = None
+    c = 0
+    try:
+        net = ipaddress.IPv4Network(cidr,False)
+    except:
+        try:
+            net = ipaddress.IPv6Network(cidr,False)
+        except:
+            return None
+    bm = net.prefixlen
+    if net.version == 4:
+        c = _ipv4_cut(bm)
+    else:
+        c = _ipv6_cut(bm)
+    # get the full reverse name, convert to array, remove the begining parts that belong to the address, then rejoin
+    rev = '.'.join(net.network_address.reverse_pointer.split('.')[c:])
+    return(rev)
+
+def rev_addr(addr):
+    rev=None
+    try:
+        rev=ipaddress.ip_address(str(addr)).reverse_pointer
+        rev+="."
+    except:
+        pass
+    return(rev)
 
 def merge_dicts(d1, d2):
     out = d1
@@ -82,4 +135,57 @@ def rr_cmp(record_a, record_b):
             return 1
         else:
             return 0
+
+def splitfqdn(fqdn, off=0):
+    if len(fqdn) == 0:
+        return(None, None)
+    sp = fqdn.split('.')
+    return(sp[off],".".join(sp[(off+1):]))
+
+def rr_print(fmt, **kwargs):
+    rr_type = kwargs['rr_type']
+    opts = kwargs['options']
+#        kwargs = kwargs | opts
+    kwargs = merge_dicts(kwargs,opts)
+    if kwargs.get('ttl') == None:
+        kwargs['ttl'] = ""
+    (name, domain) = splitfqdn(kwargs['fqdn'])
+    if name == "@":
+        kwargs['fqdn'] = domain+"."
+    else:
+        kwargs['fqdn'] = kwargs['fqdn']+"."
+    if rr_type == "SOA":
+        kwargs['serial'] = gen_serial()
+    if fmt[rr_type] != None:
+        str=fmt[rr_type].format(**kwargs)
+    else:
+        str=fmt['XX'].format(**kwargs)
+    return(str)
+
+def revr_print(fmt, **kwargs):
+    str=""
+    # reset the rr_type
+    rr_type = kwargs['rr_type']
+    if rr_type == 'A':
+        kwargs['rr_type'] = 'PTR'
+        rr_type = 'PTR'
+    elif rr_type == 'AAAA':
+        kwargs['rr_type'] = 'PTR6'
+        rr_type = 'PTR6'
+    else:
+        return("")
+    kwargs['revaddr'] = rev_addr(kwargs['value'])
+    if kwargs['revaddr'] == None:
+        return("")
+    opts = kwargs['options']
+    kwargs = merge_dicts(kwargs,opts)
+    if kwargs.get('ttl',None) == None:
+        kwargs['ttl'] = ""
+    fqdn = kwargs.get('fqdn',None)
+    if fqdn != None:
+        if fqdn[-1] != '.':
+            kwargs['fqdn'] += "."
+    if fmt[rr_type] != None:
+        str = fmt[rr_type].format(**kwargs)
+    return(str)
 
