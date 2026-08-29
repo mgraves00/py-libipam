@@ -88,52 +88,44 @@ class export_bind:
         ns_recs = extract_records("NS", resource_records)
         # remaining records
         network_records = self.db.find_network(network)
-
         file.append(f'$ORIGIN {revdom}.')
-
-#        kwargs['name'] = name
-#        kwargs['domain'] = domain
-#        if name == "@":
-#            kwargs['fqdn'] = name
-
         # add NS records
         for r in ns_recs:
             (name,domain) = splitfqdn(r['fqdn'])
             r['name'] = name
             file.append(self._rr_print(**r))
-        
         for r in network_records:
             r['revaddr'] = rev_addr(r['value'])
             r['revaddr'] = stripdomain(r['revaddr'],revdom)
             if r['revaddr'] != None:
-                file.append(self._revr_print(r))
-
+                file.append(self._revr_print(**r))
         return("\n".join(file))
 
     def process_domain(self, *args, **kwargs):
         domain = kwargs.get('domain',None)
         if self.db == None or domain == None:
             raise Exception("missing arguments")
-
         file = []
         domain_record = self.db.find_domain(domain)
         resource_records = self.db.find_record("*."+domain)
         subdomain_record = self.db.find_domain("*."+domain)
-
         file.append(f'$ORIGIN {domain}.')
         dom_r = domain_record[0]
         dom_r = merge_dicts(dom_r, { 'rr_type': "SOA"})
         file.append(self._rr_print(**dom_r))
         ns_recs = extract_records("NS", resource_records)
         mx_recs = extract_records("MX", resource_records)
-        resource_records = clear_records(["NS", "MS"], resource_records)
+        resource_records = clear_records(["NS", "MX"], resource_records)
         # add NS records
         for r in ns_recs:
+            (name,domain) = splitfqdn(r['fqdn'])
+            r['name'] = name
             file.append(self._rr_print(**r))
         # add MX records
-        for r in resource_records:
+        for r in mx_recs:
+            (name,domain) = splitfqdn(r['fqdn'])
+            r['name'] = name
             file.append(self._rr_print(**r))
-
         # handle subdomains
         for sub in subdomain_record:
             file.append(f'$ORIGIN {sub["fqdn"]}.')
@@ -142,34 +134,26 @@ class export_bind:
             # only need to print the NS and A records for NS
             ns_recs = extract_records("NS", sub_rr)
             for r in ns_recs:
+                (name,domain) = splitfqdn(r['fqdn'])
+                r['name'] = name
                 file.append(self._rr_print(**r))
                 save_ns.append(r['value'])
             # now go back thru and look for the NS A records
             for i, r in enumerate(sub_rr):
                 if r['fqdn'] in save_ns:
+                    (name,domain) = splitfqdn(r['fqdn'])
+                    r['name'] = name
                     file.append(self._rr_print(**r))
+       # now output resoure records
+        for r in resource_records:
+            (name,domain) = splitfqdn(r['fqdn'])
+            r['name'] = name
+            file.append(self._rr_print(**r))
+
         return("\n".join(file))
 
     def _rr_print(self, **kwargs):
         return rr_print(self.RR_FMT, **kwargs)
-#        rr_type = kwargs['rr_type']
-#        opts = kwargs['options']
-##        kwargs = kwargs | opts
-#        kwargs = merge_dicts(kwargs,opts)
-#        if kwargs.get('ttl') == None:
-#            kwargs['ttl'] = ""
-#        if rr_type == "SOA":
-#            kwargs['serial'] = gen_serial()
-#        (name, domain) = self.db._splitfqdn(kwargs['fqdn'])
-#        kwargs['name'] = name
-#        kwargs['domain'] = domain
-#        if name == "@":
-#            kwargs['fqdn'] = name
-#        if self.RR_FMT[rr_type] != None:
-#            str=self.RR_FMT[rr_type].format(**kwargs)
-#        else:
-#            str=self.RR_FMT['XX'].format(**kwargs)
-#        return(str)
 
-    def _revr_print(self, kwargs):
+    def _revr_print(self, **kwargs):
         return revr_print(self.RR_FMT, **kwargs)
