@@ -34,7 +34,7 @@ import ipaddress
 
 __all__ = [ 'merge_dicts', 'gen_serial', 'clear_records', 'extract_records',
             'rr_cmp', 'net_to_rev', 'rev_addr', 'splitfqdn', 'rr_print', 'revr_print',
-            'validate_network' ]
+            'validate_network', 'stripdomain' ]
 
 def _ipv4_cut(bitmask):
     t=4
@@ -136,6 +136,24 @@ def rr_cmp(record_a, record_b):
         else:
             return 0
 
+def stripdomain(fqdn, dom):
+    if fqdn == None or dom == None:
+        return(None)
+    if len(fqdn) == 0 or dom == 0:
+        return(fqdn)
+    # if fqdn ends with . , then make sure dom does
+    if fqdn.endswith('.'):
+        if not dom.endswith('.'):
+            dom += "."
+    # if fqdn does not ends with . , then make sure dom does not
+    if not fqdn.endswith('.'):
+        if dom.endswith('.'):
+            dom = dom[:-1]
+    name = fqdn
+    if fqdn.endswith(dom):
+        name = fqdn.replace("."+dom,"")
+    return(name)
+
 def splitfqdn(fqdn, off=0):
     if len(fqdn) == 0:
         return(None, None)
@@ -173,9 +191,6 @@ def revr_print(fmt, **kwargs):
         kwargs['rr_type'] = 'PTR6'
         rr_type = 'PTR6'
     else:
-        return("")
-    kwargs['revaddr'] = rev_addr(kwargs['value'])
-    if kwargs['revaddr'] == None:
         return("")
     opts = kwargs['options']
     kwargs = merge_dicts(kwargs,opts)
