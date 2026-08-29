@@ -35,7 +35,7 @@ from libipam.export_nsd import export_nsd
 from libipam.export_unbound import export_unbound
 
 class ipam:
-    VERSION="1.0.12"
+    VERSION="1.0.13"
     RR_OPTS = { 
         'SOA': { 'req': ['mname', 'email','refresh','retry','expire','ncache'], 'opt':['ttl','serial'] },
         'A': { 'req': [], 'opt': ['ttl'] },
@@ -53,6 +53,7 @@ class ipam:
         'NAPTR': { 'req': ['order','perf','flag','service','regx'], 'opt': ['ttl'] },
         'NS': { 'req': [], 'opt': ['ttl'] } , 
         'PTR': { 'req': [], 'opt': ['ttl'] },
+        'PTR6': { 'req': [], 'opt': ['ttl'] },
         'RP': { 'req': ['mbox'], 'opt': ['ttl', 'mail'] } , 
         'SRV': { 'req': ['priority', 'weight', 'port'], 'opt': ['ttl'] } , 
         'SSHFP': { 'req': ['algo','type'], 'opt': ['ttl'] },
@@ -110,13 +111,18 @@ class ipam:
     def export(self, *args, **kwargs):
         e_type = kwargs.get('type', None);
         dom = kwargs.get('domain', None);
+        net = kwargs.get('network', None);
         if e_type == "bind":
             self.edriver = export_bind(self.db)
         elif e_type == "nsd":
             self.edriver = export_nsd(self.db)
         elif e_type == "unbound":
             self.edriver = export_unbound(self.db)
-        return self.edriver.process(domain=dom)
+        if dom != None:
+            return self.edriver.process(domain=dom)
+        if net != None:
+            return self.edriver.process(network=net)
+        return None
 
     def unpack_options(self, options):
         # take the option DB format and create dict
