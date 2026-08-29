@@ -108,7 +108,7 @@ class export_bind:
         file = []
         domain_record = self.db.find_domain(domain)
         resource_records = self.db.find_record("*."+domain)
-        subdomain_record = self.db.find_domain("*."+domain)
+        subdomain_record = self.db.find_domain("*."+domain, include_subs=True)
         file.append(f'$ORIGIN {domain}.')
         dom_r = domain_record[0]
         dom_r = merge_dicts(dom_r, { 'rr_type': "SOA"})
