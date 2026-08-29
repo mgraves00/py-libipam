@@ -100,7 +100,7 @@ class export_bind:
         for r in ns_recs:
             (name,domain) = splitfqdn(r['fqdn'])
             r['name'] = name
-            file.append(self._rr_print(r))
+            file.append(self._rr_print(**r))
         
         for r in network_records:
             r['revaddr'] = rev_addr(r['value'])
@@ -123,16 +123,16 @@ class export_bind:
         file.append(f'$ORIGIN {domain}.')
         dom_r = domain_record[0]
         dom_r = merge_dicts(dom_r, { 'rr_type': "SOA"})
-        file.append(self._rr_print(dom_r))
+        file.append(self._rr_print(**dom_r))
         ns_recs = extract_records("NS", resource_records)
         mx_recs = extract_records("MX", resource_records)
         resource_records = clear_records(["NS", "MS"], resource_records)
         # add NS records
         for r in ns_recs:
-            file.append(self._rr_print(r))
+            file.append(self._rr_print(**r))
         # add MX records
         for r in resource_records:
-            file.append(self._rr_print(r))
+            file.append(self._rr_print(**r))
 
         # handle subdomains
         for sub in subdomain_record:
@@ -142,15 +142,15 @@ class export_bind:
             # only need to print the NS and A records for NS
             ns_recs = extract_records("NS", sub_rr)
             for r in ns_recs:
-                file.append(self._rr_print(r))
+                file.append(self._rr_print(**r))
                 save_ns.append(r['value'])
             # now go back thru and look for the NS A records
             for i, r in enumerate(sub_rr):
                 if r['fqdn'] in save_ns:
-                    file.append(self._rr_print(r))
+                    file.append(self._rr_print(**r))
         return("\n".join(file))
 
-    def _rr_print(self, kwargs):
+    def _rr_print(self, **kwargs):
         return rr_print(self.RR_FMT, **kwargs)
 #        rr_type = kwargs['rr_type']
 #        opts = kwargs['options']
