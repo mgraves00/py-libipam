@@ -107,6 +107,7 @@ class db_sqlite3:
     def find_domain(self, *args, **kwargs):
         name = args[0]
         include_subs = kwargs.get('include_subs',False)
+        include_parents = kwargs.get('include_parents',False)
         values={}
         result=[]
         name_arr = args[0].split('.');
@@ -124,7 +125,12 @@ class db_sqlite3:
                     sql=sql+" OR name LIKE :subname"
                     values['subname'] = "%."+name
             sql=sql+" ORDER BY name ASC;"
+#            print(f"find_domain: sql {sql}")
+#            print(f"find_domain: values {values}")
             result = self._query(sql, values)
+            # exit loop if we are not trying to find parents
+            if not include_parents:
+                break;
             if len(result) == 0:	# nothing returned
                 name_arr.pop(0);	# remove first part and try again
             else: # exit loop
@@ -141,7 +147,9 @@ class db_sqlite3:
         name = args[0]
         if len(name) <= 0:
             raise Exception("name: not specified")
+#        print(f"add_domain: {name}")
         r = self.find_domain(name)
+#        print(f"add_domain: found {r}")
         if len(r) > 0: # domain already exists
             raise Exception("domain already exists")
         options = kwargs.get('options',None)
@@ -161,6 +169,8 @@ class db_sqlite3:
         else:
             sql = 'INSERT INTO domains (name,serial,options) VALUES (:name,:serial,:options);'
         values = { 'name': name, 'serial': serial, 'options': options }
+#        print(f"add_domain: sql {sql}")
+#        print(f"add_domain: values {values}")
         # will always return an empty array
         return self._query(sql, values)
 
