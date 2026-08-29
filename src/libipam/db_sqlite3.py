@@ -381,10 +381,11 @@ class db_sqlite3:
         return(ret)
 
     def _splitfqdn(self, fqdn, off=0):
-        if len(fqdn) == 0:
-            return(None, None)
-        sp = fqdn.split('.')
-        return(sp[off],".".join(sp[(off+1):]))
+        return splitfqdn(fqdn, off)
+#        if len(fqdn) == 0:
+#            return(None, None)
+#        sp = fqdn.split('.')
+#        return(sp[off],".".join(sp[(off+1):]))
 
     def _ip2num(self, addr=None):
         if addr == None:
