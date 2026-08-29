@@ -94,7 +94,9 @@ class export_nsd:
             file.append(self._rr_print(**r))
         # now everything else
         for r in network_records:
-            file.append(self._revr_print(**r))
+            r['revaddr'] = rev_addr(r['value'])
+            if r['revaddr'] != None:
+                file.append(self._revr_print(**r))
         # return file
         return("\n".join(file))
 
