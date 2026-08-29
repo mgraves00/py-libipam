@@ -22,6 +22,7 @@ MODULES =		lang/python
 
 MODPY_PI =		No
 MODPY_PYBUILD = 	setuptools
+# required py-build and py-installer
 
 NO_TEST =		Yes
 
