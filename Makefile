@@ -1,0 +1,48 @@
+#
+VER=1.0.13
+BASENAME=py-libipam
+RELNAME=${BASENAME}-${VER}
+RELPATH=release
+
+obsd_pkg_dir=packages/OpenBSD/7.9
+_size_fragment = perl -e '$$s = (stat $$ARGV[0])[7]; print "SIZE ($$ARGV[1]) = $$s\n";'
+
+FILES= LICENSE \
+		README.md \
+		pyproject.toml \
+		requirements.txt \
+		setup.py \
+		src/libipam/*.py \
+		src/libipam/*.schema
+
+all:
+	@echo "targets:"
+	@echo "  release"
+
+release: update_version make_package update_distfile
+	git tag -f v${VER}
+	git push origin -f --tags
+	@echo "version updated to ${VER}"
+	@echo "updates pushed to origin."
+	@echo "ready to create release"
+
+update_version:
+	sed -i 's/version="([^*])/version="${VER}/' setup.py
+	sed -i 's/VERSION="([^*])/VERSION="${VER}/' src/libipam/__init__.py
+	sed -i 's/\(V = *\).*/\1${VER}/' ${obsd_pkg_dir}/Makefile
+	-git commit -m "touch version" setup.py src/libipam/__init__.py ${obsd_pkg_dir}/Makefile
+
+make_package:
+	mkdir -p ${.CURDIR}/${RELPATH}/${RELNAME}/src/libipam
+	for f in ${FILES}; do cp $$f ${.CURDIR}/${RELPATH}/${RELNAME}/$$f; done
+	tar -C ${.CURDIR}/${RELPATH}/ -czf ${.CURDIR}/${RELPATH}/${RELNAME}.tar.gz ${RELNAME}/
+
+update_distfile:
+	ck="${.CURDIR}/${obsd_pkg_dir}/DISTFILE.new"; \
+	trap "rm -f $$ck; exit 1" 1 2 3 13 15; \
+	cd ${.CURDIR}/${RELPATH}; \
+	cksum -b -a SHA256 -- ${RELNAME}.tar.gz >> $$ck; \
+	${_size_fragment} ${RELNAME}.tar.gz ${RELNAME}.tar.gz >> $$ck; \
+	mv -f $$ck ${.CURDIR}/${obsd_pkg_dir}/distinfo
+	-git commit -m "update checksum" ${.CURDIR}/${obsd_pkg_dir}/distinfo
+
