@@ -110,6 +110,8 @@ class ipam:
 
     def export(self, *args, **kwargs):
         e_type = kwargs.get('type', None);
+        if e_type not in ["bind", "nsd", "unbound"]:
+            raise Exception("unknow DNS format")
         dom = kwargs.get('domain', None);
         net = kwargs.get('network', None);
         if e_type == "bind":
