@@ -49,7 +49,8 @@ class export_nsd:
             'MX':     "{fqdn:<25} {ttl:<6} IN {rr_type} {priority} {value}.",
             'NAPTR':  "{fqdn:<25} {ttl:<6} IN {rr_type} {order} \"{pref}\" \"{flags}\" \"{service\"} \"{regx}\" {value}",
             'NS':     "{fqdn:<25} {ttl:<6} IN {rr_type} {value}.",
-            'PTR':    "{fqdn:<25} {ttl:<6} IN {rr_type} {value}",
+            'PTR':    "{revaddr:<30} {ttl:<6} IN {rr_type} {fqdn:<25}",
+            'PTR6':   "{revaddr:<30} {ttl:<6} IN {rr_type} {fqdn:<25}",
             'SRV':    "{fqdn:<25} {ttl:<6} IN {rr_type} {priority} {weight} {port} {value}.",
             'SSHFP':  "{fqdn:<25} {ttl:<6} IN {rr_type} {algo} {type} {value}",
             'TXT':    "{fqdn:<25} {ttl:<6} IN {rr_type} \"{value}\"",
@@ -57,24 +58,59 @@ class export_nsd:
             'XX':     "{fqdn:<25} {ttl:<6} IN {rr_type} {value}"
     }
 
-
     def __init__(self, *args, **kwargs):
         self.db = args[0]
 
     def process(self, *args, **kwargs):
+        d = kwargs.get('domain', None)
+        n = kwargs.get('network', None)
+        if d != None:
+            return self.process_domain(*args, **kwargs)
+        if n != None:
+            return self.process_network(*args, **kwargs)
+        return None
+
+    def process_network(self, *args, **kwargs):
+        network = kwargs.get('network',None)
+        if self.db == None or network == None:
+            raise Exception("missing arguments")
+        file = []
+        network = validate_network(network)
+        if network == None:
+            raise Exception("invalid network")
+        revdom = net_to_rev(network)
+        # SOA record for reverse zone
+        revdom_SOA = self.db.find_domain(revdom)
+        if len(revdom_SOA) == 0:
+            raise Exception("network not found")
+        # NS records for reverse zone
+        resource_records = self.db.find_record("*."+revdom)
+        ns_recs = extract_records("NS", resource_records)
+        # remaining records
+        network_records = self.db.find_network(network)
+        # print SOA first
+        file.append(self._rr_print(**revdom_SOA[0]))
+        for r in ns_recs:
+            file.append(self._rr_print(**r))
+        # now everything else
+        for r in network_records:
+            file.append(self._revr_print(**r))
+        # return file
+        return("\n".join(file))
+
+    def process_domain(self, *args, **kwargs):
         domain = kwargs.get('domain',None)
         if self.db == None or domain == None:
             raise Exception("missing arguments")
-
         file = []
         domain_record = self.db.find_domain(domain)
         resource_records = self.db.find_record("*."+domain)
         subdomain_record = self.db.find_domain("*."+domain)
-
+        # SOA record
         dom_r = domain_record[0]
-#        dom_r = dom_r | { 'rr_type': "SOA"}
         dom_r = merge_dicts(dom_r, { 'rr_type': "SOA"})
         file.append(self._rr_print(dom_r))
+        # NS and MX records
         ns_recs = extract_records("NS", resource_records)
         mx_recs = extract_records("MX", resource_records)
         resource_records = clear_records(["NS", "MS"], resource_records)
@@ -84,7 +120,6 @@ class export_nsd:
         # add MX records
         for r in resource_records:
             file.append(self._rr_print(r))
-
         # handle subdomains
         for sub in subdomain_record:
             save_ns=[]
@@ -100,23 +135,9 @@ class export_nsd:
                     file.append(self._rr_print(r))
         return("\n".join(file))
 
-    def _rr_print(self, kwargs):
-        rr_type = kwargs['rr_type']
-        opts = kwargs['options']
-#        kwargs = kwargs | opts
-        kwargs = merge_dicts(kwargs,opts)
-        if kwargs.get('ttl') == None:
-            kwargs['ttl'] = ""
-        (name, domain) = self.db._splitfqdn(kwargs['fqdn'])
-        if name == "@":
-            kwargs['fqdn'] = domain+"."
-        else:
-            kwargs['fqdn'] = kwargs['fqdn']+"."
-        if rr_type == "SOA":
-            kwargs['serial'] = gen_serial()
-        if self.RR_FMT[rr_type] != None:
-            str=self.RR_FMT[rr_type].format(**kwargs)
-        else:
-            str=self.RR_FMT['XX'].format(**kwargs)
-        return(str)
+    def _rr_print(self, **kwargs):
+        return rr_print(self.RR_FMT, **kwargs)
+
+    def _revr_print(self, **kwargs):
+        return revr_print(self.RR_FMT, **kwargs)
 
