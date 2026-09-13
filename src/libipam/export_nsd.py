@@ -112,7 +112,7 @@ class export_nsd:
         dom_r = domain_record[0]
         dom_r = merge_dicts(dom_r, { 'rr_type': "SOA"})
         file.append(self._rr_print(**dom_r))
-        # NS and MX records
+        # Extract NS and MX records
         ns_recs = extract_records("NS", resource_records)
         mx_recs = extract_records("MX", resource_records)
         resource_records = clear_records(["NS", "MX"], resource_records)
@@ -120,6 +120,9 @@ class export_nsd:
         for r in ns_recs:
             file.append(self._rr_print(**r))
         # add MX records
+        for r in mx_recs:
+            file.append(self._rr_print(**r))
+        # remainder of the records
         for r in resource_records:
             file.append(self._rr_print(**r))
         # handle subdomains
