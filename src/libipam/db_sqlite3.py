@@ -262,8 +262,8 @@ class db_sqlite3:
                 # we already know that the fqdn matches... check the type and value
                 if r['rr_type'] == rr_type.upper() and r['value'] == value.lower(): # otherwise it might be a different type of record
                     raise Exception("host already exists")
-        recs = self.find_domain(fqdn)
-        if recs == 0:
+        recs = self.find_domain(fqdn,include_parents=True)
+        if len(recs) == 0:
             raise Exception("domain not found")
         domain = recs[0]['fqdn']
         domain_id = recs[0]['id']
