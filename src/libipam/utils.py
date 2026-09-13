@@ -135,7 +135,15 @@ def rr_cmp(record_a, record_b):
             return 1
         else:
             return 0
+"""
+stripdomain(fqdn, dom)
 
+strips the domain part from the fqdn so that fqdn
+will end up being 'name[.sub]' where the sub part
+will be presenent only if there isn't another
+sub.domain
+
+"""
 def stripdomain(fqdn, dom):
     if fqdn == None or dom == None:
         return(None)
@@ -174,6 +182,11 @@ def rr_print(fmt, **kwargs):
         kwargs['fqdn'] = kwargs['fqdn']+"."
     if rr_type == "SOA":
         kwargs['serial'] = gen_serial()
+    # If name is root (.) then send to nothing as root
+    # is added later.
+    if kwargs['value'] == '.':
+        kwargs['value'] = ""
+    # now generate the string
     if fmt[rr_type] != None:
         str=fmt[rr_type].format(**kwargs)
     else:
