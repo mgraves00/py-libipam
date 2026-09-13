@@ -1,5 +1,5 @@
 #
-VER=1.0.13
+VER=1.0.14
 BASENAME=py-libipam
 RELNAME=${BASENAME}-${VER}
 RELPATH=release
@@ -27,8 +27,8 @@ release: update_version make_package update_distfile
 	@echo "ready to create release"
 
 update_version:
-	sed -i 's/version="([^*])/version="${VER}/' setup.py
-	sed -i 's/VERSION="([^*])/VERSION="${VER}/' src/libipam/__init__.py
+	sed -i 's/version="\([^"]*\)/version="${VER}/' setup.py
+	sed -i 's/VERSION="\([^"]*\)/VERSION="${VER}/' src/libipam/__init__.py
 	sed -i 's/\(V = *\).*/\1${VER}/' ${obsd_pkg_dir}/Makefile
 	-git commit -m "touch version" setup.py src/libipam/__init__.py ${obsd_pkg_dir}/Makefile
 
