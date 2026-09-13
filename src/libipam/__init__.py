@@ -35,7 +35,7 @@ from libipam.export_nsd import export_nsd
 from libipam.export_unbound import export_unbound
 
 class ipam:
-    VERSION="1.0.14"
+    VERSION="1.0.15"
     RR_OPTS = { 
         'SOA': { 'req': ['mname', 'email','refresh','retry','expire','ncache'], 'opt':['ttl','serial'] },
         'A': { 'req': [], 'opt': ['ttl'] },
