@@ -1,5 +1,5 @@
 #
-VER=1.0.14
+VER=1.0.15
 BASENAME=py-libipam
 RELNAME=${BASENAME}-${VER}
 RELPATH=release
@@ -17,14 +17,22 @@ FILES= LICENSE \
 
 all:
 	@echo "targets:"
-	@echo "  release"
+	@echo "  release - final step to push to github"
+	@echo "  prep_release - update version, make package, update distfile... ready to build port and update PLIST"
+	@echo "  update_version"
+	@echo "  make_package"
+	@echo "  update_distfile"
 
-release: update_version make_package update_distfile
+release: prep_release
 	git tag -f v${VER}
-	git push origin -f --tags
-	@echo "version updated to ${VER}"
-	@echo "updates pushed to origin."
+	git push origin --tags
+	@echo "updated tags and pushed to origin."
 	@echo "ready to create release"
+
+prep_release: update_version make_package update_distfile
+	git push origin
+	@echo "version updated to ${VER}"
+	@echo "pushed to origin, but didn't update tags"
 
 update_version:
 	sed -i 's/version="\([^"]*\)/version="${VER}/' setup.py
