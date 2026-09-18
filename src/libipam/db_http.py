@@ -139,7 +139,7 @@ class db_http:
         path = [self.URL, "domain"]
         if args[0] == None:
             raise Exception("name: not specified")
-        data = { 'resouce': 'domain', 'fqdn': args[0], 'rr_type': 'SOA', 'value': None, 'options': kwargs.get('options',None) }
+        data = { 'resouce': 'domain', 'fqdn': args[0], 'rr_type': 'SOA', 'value': None, 'force': kwargs.get('force',False), 'options': kwargs.get('options',None) }
         jdata = json.dumps(data)
         try:
             res = requests.delete("/".join(path),headers=headers,data=jdata)
@@ -209,7 +209,7 @@ class db_http:
     def delete_record(self, *args, **kwargs):
         headers = {'Authorization': self.api_key}
         path = [self.URL, "record"]
-        data = { 'resouce': 'record', 'fqdn': args[0], 'options': kwargs.get('options',None) }
+        data = { 'resouce': 'record', 'fqdn': args[0], 'force': kwargs.get('force',False), 'options': kwargs.get('options',None) }
         jdata = json.dumps(data)
         try:
             res = requests.delete("/".join(path),headers=headers,data=jdata)
