@@ -1,7 +1,7 @@
 #
 COMMENT =		python interface to manipulate a simple IPAM database
 
-V = 1.0.15
+V = 1.0.16
 MODPY_EGG_VERSION =	${V}
 #REVISION =		0
 DISTNAME =		py-libipam-${V}

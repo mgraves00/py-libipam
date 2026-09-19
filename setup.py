@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup( name="libipam",
-	version="1.0.15",
+	version="1.0.16",
 	author="Michael Graves",
 	author_email="code@brainfat.net",
 	packages=find_packages("src"),
